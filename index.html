@@ -37,7 +37,7 @@ footer{padding:30px 7vw;border-top:1px solid var(--line);display:flex;justify-co
 <nav><a class="brand" href="#top">Gouache & Graphite</a><div class="navlinks"><a href="#work">Work</a><a href="#available">Shop</a><a href="#commissions">Commissions</a><a href="#contact">Contact</a><a href="https://www.instagram.com/gouacheandgraphite/" target="_blank" rel="noopener">Instagram ↗</a></div></nav>
 <main id="top">
 <section class="hero"><div class="hero-copy reveal"><div class="eyebrow">Ankita Gound · Artist</div><h1>Painted<br>stories.<em>Quietly alive.</em></h1><p class="hero-intro">A small online studio for nature, portraits, colour and the little details that make a scene feel alive.</p><div class="hero-actions"><a class="btn primary" href="#work">Enter the gallery ↘</a><a class="btn" href="https://www.instagram.com/gouacheandgraphite/" target="_blank" rel="noopener">Instagram ↗</a></div></div><div class="hero-art reveal delay-1"><span class="leaf one">❧</span><span class="leaf two">❧</span><div class="hero-frame"><img src="ankita-art-portfolio/assets/art-06.jpeg" alt="Vitthal artwork by Ankita Gound"><div class="stamp">made by<br>Ankita ✦</div></div></div></section>
-<section class="section" id="work"><div class="section-head reveal"><div><div class="section-kicker">01 — The gallery</div><h2>Pieces from<br>the studio.</h2></div><p class="section-note">Botanical scenes, forests, portraits and imagined worlds. The studio wall moves on its own — swipe on mobile or use the arrows.</p></div><div class="carousel-wrap reveal"><div class="carousel" id="carouselTrack">
+<section class="section" id="work"><div class="section-head reveal"><div><div class="section-kicker">01 — The gallery</div><h2>Pieces from<br>the studio.</h2></div><p class="section-note">Botanical scenes, forests, portraits and imagined worlds. The studio wall moves on its own — swipe on mobile or use the arrows. New artworks added to the assets folder appear here automatically.</p></div><div class="carousel-wrap reveal"><div class="carousel" id="carouselTrack">
 <div class="slide"><img src="ankita-art-portfolio/assets/art-06.jpeg" alt="Vitthal art work using gouache paint"><div class="slide-caption">Vitthal Art · Original</div></div>
 <div class="slide"><img src="ankita-art-portfolio/assets/art-03.jpeg" alt="Graphite portrait study with a snake and crescent moon"><div class="slide-caption">Portrait Study · Graphite</div></div>
 <div class="slide"><img src="ankita-art-portfolio/assets/art-01.jpeg" alt="Blue white flowers in a deep green garden"><div class="slide-caption">Blue Garden · Original</div></div>
@@ -73,7 +73,49 @@ const prevBtn=document.getElementById('prev');
 nextBtn.onclick=()=>track.scrollBy({left:step(),behavior:'smooth'});
 prevBtn.onclick=()=>track.scrollBy({left:-step(),behavior:'smooth'});
 
-// Automatic studio carousel: gentle movement, with a pause while the visitor interacts.
+/* Automatically discover every art-XX.jpeg in the GitHub assets folder. */
+const artworkTitles={
+  "art-01.jpeg":"Blue Garden · Original",
+  "art-02.jpeg":"Autumn Mushroom · Original",
+  "art-03.jpeg":"Portrait Study · Graphite",
+  "art-04.jpeg":"Forest I · Original",
+  "art-05.jpeg":"Forest II · Original",
+  "art-06.jpeg":"Vitthal Art · Original",
+  "art-07.jpeg":"Golden Meadow · Original",
+  "art-08.jpeg":"Portrait in Warm Light · Original"
+};
+const artworkAlts={
+  "art-01.jpeg":"Blue white flowers in a deep green garden",
+  "art-02.jpeg":"Mushroom landscape with autumn colours",
+  "art-03.jpeg":"Graphite portrait study with a snake and crescent moon",
+  "art-04.jpeg":"Forest landscape with flowers",
+  "art-05.jpeg":"Forest landscape with white flowers",
+  "art-06.jpeg":"Vitthal art work using gouache paint",
+  "art-07.jpeg":"Sunlit yellow flower meadow",
+  "art-08.jpeg":"Traditional portrait study in warm colours"
+};
+
+async function loadArtworkAutomatically(){
+  try{
+    const response=await fetch('https://api.github.com/repos/ankitack01/gouacheandgraphite/contents/ankita-art-portfolio/assets?ts='+Date.now(),{cache:'no-store'});
+    if(!response.ok) throw new Error('GitHub asset list unavailable');
+    const files=await response.json();
+    const artworkFiles=files
+      .filter(file=>file.type==='file' && /^art-\d+\.jpe?g$/i.test(file.name))
+      .sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true}));
+
+    if(!artworkFiles.length) return;
+
+    track.innerHTML=artworkFiles.map(file=>{
+      const title=artworkTitles[file.name] || file.name.replace(/\.[^.]+$/,'').replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase())+' · Original';
+      const alt=artworkAlts[file.name] || title.replace(/ · Original$/,'');
+      return '<div class="slide"><img src="'+file.download_url+'" alt="'+alt.replace(/"/g,'&quot;')+'"><div class="slide-caption">'+title.replace(/</g,'&lt;')+'</div></div>';
+    }).join('');
+  }catch(error){
+    /* Keep the existing eight-image slides as a fallback. */
+  }
+}
+
 let carouselPaused=false;
 let carouselTimer;
 const advanceCarousel=()=>{
@@ -93,4 +135,5 @@ track.addEventListener('focusout',()=>carouselPaused=false);
 track.addEventListener('touchstart',()=>carouselPaused=true,{passive:true});
 track.addEventListener('touchend',()=>{carouselPaused=false;startCarousel()},{passive:true});
 startCarousel();
+loadArtworkAutomatically();
 </script></body></html>
